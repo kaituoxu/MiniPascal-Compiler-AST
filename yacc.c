@@ -22,6 +22,7 @@ void OutputAST(void);
 FILE* fp;
 
 extern int VarCount;
+extern int tempVarCount;
 extern int NXQ;  /* used to indicate the number of next Quater*/
 extern struct QUATERLIST QuaterList[MAXMEMBER];
 extern struct VARLIST VarList[MAXMEMBER];
@@ -80,6 +81,23 @@ void OutputIList(void)
 		}
 	}
 
+	i = 1;
+	printf("\n**** Temp Variable Symbol Table ****\n");
+	printf(" No.\t name \t\t   type\n");
+
+	if (i >= tempVarCount) {
+		printf("Temp Variable Symbol Table is NULL!\n");
+	}
+
+	for (i = 1;i<tempVarCount;i++) {
+		printf("%4d\t%6s\t\t", i, VarList[MAXMEMBER - i].name);
+		if (VarList[MAXMEMBER - i].type) {
+			printf(" REAL  \n");
+		} else {
+			printf(" INTEGER\n");
+		}
+	}
+
 	return;
 }
 
@@ -113,7 +131,7 @@ void OutputQ(void)
 	return;
 }
 
-//int tabä»£è¡¨ç¼©è¿›çš„tabæ•°
+//int tab´ú±íËõ½øµÄtabÊý
 void PreOrder(struct node *root, int tab)
 {
 	int i = 0;

@@ -5,14 +5,14 @@
 #include "ast.h"
 
 /****************************************
-  rootèŠ‚ç‚¹æ˜¯å…¨å±€å˜é‡ã€‚å…¶ä»–éœ€è¦ä½¿ç”¨çš„åœ°æ–¹
-éœ€å®šä¹‰ä¸ºextern struct node rootã€‚
+  root½ÚµãÊÇÈ«¾Ö±äÁ¿¡£ÆäËûĞèÒªÊ¹ÓÃµÄµØ·½
+Ğè¶¨ÒåÎªextern struct node root¡£
 *****************************************/
-struct node root;/*æ•´ä¸ªASTçš„æ ¹èŠ‚ç‚¹ã€‚è¯¥èŠ‚ç‚¹ä¸å…è®¸æœ‰
-                   å…„å¼ŸèŠ‚ç‚¹ï¼Œå³root.next==NULL*/
+struct node root;/*Õû¸öASTµÄ¸ù½Úµã¡£¸Ã½Úµã²»ÔÊĞíÓĞ
+                   ĞÖµÜ½Úµã£¬¼´root.next==NULL*/
 
 /***************************************
-  init_nodeå‡½æ•°è´Ÿè´£å¯¹ndèŠ‚ç‚¹è¿›è¡Œåˆå§‹åŒ–
+  init_nodeº¯Êı¸ºÔğ¶Ônd½Úµã½øĞĞ³õÊ¼»¯
 ****************************************/
 int init_node(struct node *nd)
 {
@@ -31,31 +31,31 @@ int init_node(struct node *nd)
 
 
 /************************************************
-  æ·»åŠ å…„å¼ŸèŠ‚ç‚¹æ—¶ï¼Œåªèƒ½ä»parent->sonå¤„å¼€å§‹æ·»åŠ 
+  Ìí¼ÓĞÖµÜ½ÚµãÊ±£¬Ö»ÄÜ´Óparent->son´¦¿ªÊ¼Ìí¼Ó
 *************************************************/
 int add_son_node(struct node *parent, struct node *son)
 {
     if(NULL!=parent && NULL!=son)
     {
-        if(parent->son==NULL)/*parentè¿˜æ²¡æœ‰æ·»åŠ å­èŠ‚ç‚¹*/
+        if(parent->son==NULL)/*parent»¹Ã»ÓĞÌí¼Ó×Ó½Úµã*/
         {
             parent->son=son;
 			son->parent = parent;// KTX
         }
-        else/*parentå·²ç»æœ‰è‹¥å¹²å­èŠ‚ç‚¹ï¼Œåˆ™å°†sonæ·»åŠ åˆ°è¯¥é“¾çš„æœ«å°¾*/
+        else/*parentÒÑ¾­ÓĞÈô¸É×Ó½Úµã£¬Ôò½«sonÌí¼Óµ½¸ÃÁ´µÄÄ©Î²*/
         {
             struct node *tmp_node=parent->son;
             
             while(NULL!=tmp_node->next)
             {
                 tmp_node=tmp_node->next;
-            }/*æœ¬å¾ªç¯è´Ÿè´£æŸ¥æ‰¾æœ€åä¸€ä¸ªå…„å¼ŸèŠ‚ç‚¹*/
+            }/*±¾Ñ­»·¸ºÔğ²éÕÒ×îºóÒ»¸öĞÖµÜ½Úµã*/
             
-            tmp_node->next=son;/*å¦‚æœsonæ˜¯å·²ç»è¯†åˆ«å‡ºæ¥çš„
-                                 ä¸€ä¸ªåºåˆ—ï¼Œåˆ™sonå¯èƒ½æœ‰å…¶
-                                 å…„å¼ŸèŠ‚ç‚¹ã€‚æ•…æ­¤å¤„ä¸éœ€è¦å°†
-                                 son->nextè®¾ç½®ä¸ºNULL*/
-            son->parent=parent;/*å»ºç«‹sonå’Œparentçš„æ˜ å°„å…³ç³»*/
+            tmp_node->next=son;/*Èç¹ûsonÊÇÒÑ¾­Ê¶±ğ³öÀ´µÄ
+                                 Ò»¸öĞòÁĞ£¬Ôòson¿ÉÄÜÓĞÆä
+                                 ĞÖµÜ½Úµã¡£¹Ê´Ë´¦²»ĞèÒª½«
+                                 son->nextÉèÖÃÎªNULL*/
+            son->parent=parent;/*½¨Á¢sonºÍparentµÄÓ³Éä¹ØÏµ*/
 //            tmp_node->next=son;
         }
         return ADD_SON_NODE_SUCCESS;
@@ -69,8 +69,8 @@ int add_son_node(struct node *parent, struct node *son)
 }
 
 /***********************************************
-    æœ¬å‡½æ•°ä¸ºbrotherèŠ‚ç‚¹æ·»åŠ åç»­å…„å¼ŸèŠ‚ç‚¹ï¼Œå¹¶å¯¹
-åç»­å…„å¼Ÿçš„parentè¿›è¡Œè®¾ç½®ã€‚
+    ±¾º¯ÊıÎªbrother½ÚµãÌí¼ÓºóĞøĞÖµÜ½Úµã£¬²¢¶Ô
+ºóĞøĞÖµÜµÄparent½øĞĞÉèÖÃ¡£
 ************************************************/
 int add_brother_node(struct node *last, struct node *new_brother)
 {
@@ -95,7 +95,7 @@ int add_brother_node(struct node *last, struct node *new_brother)
 }
 
 /************************************************
- set_node_val_strå‡½æ•°ç»™èŠ‚ç‚¹nd->val.strè®¾ç½®å­—ç¬¦ä¸²
+ set_node_val_strº¯Êı¸ø½Úµãnd->val.strÉèÖÃ×Ö·û´®
 *************************************************/
 int set_node_val_str(struct node *nd, char *str)
 {
@@ -115,8 +115,8 @@ int set_node_val_str(struct node *nd, char *str)
 }
 
 /************************************************
-    æœ¬å‡½æ•°é€šè¿‡resultå‚æ•°è¿”å›ç»“æœã€‚å‡½æ•°è¿”å›å€¼
-ç”¨äºè¡¨ç¤ºæˆåŠŸä¸å¦ã€‚
+    ±¾º¯ÊıÍ¨¹ıresult²ÎÊı·µ»Ø½á¹û¡£º¯Êı·µ»ØÖµ
+ÓÃÓÚ±íÊ¾³É¹¦Óë·ñ¡£
 *************************************************/
 int get_son_node(struct node *parent, struct node **result)
 {

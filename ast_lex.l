@@ -109,6 +109,7 @@ white			[\t\n\040]
 ","			{ECHO;return ',';}
 {letter}{alnum}*	{ ECHO;strcpy(str1,yytext);return Iden;}
 {white}+		{ECHO;}
+{d}+{letter}+        {printf("Invalid char %s\n",yytext);/*return ERRORCHAR;*/exit(0);}
 .						{printf("Invalid char %s\n",yytext);return ERRORCHAR; }
 
 %%

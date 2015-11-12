@@ -25,7 +25,7 @@ extern int VarCount;
 extern struct QUATERLIST QuaterList[MAXMEMBER];
 extern struct VARLIST VarList[MAXMEMBER];
 
-
+int flag_var_def = 0;
 %}
 %start    ProgDef
 %union 
@@ -129,7 +129,7 @@ VarDef:		Var VarDefList ';'
 		/* =========================== */
 		new_node(&($$.Node));
 		$$.Node->type = e_var_def;
-		set_node_val_str($$.Node, "VarDef");
+		set_node_val_str($$.Node, "Var");
 		add_son_node($$.Node, $2.Node);
 		}
 	;
@@ -148,10 +148,18 @@ VarDefList:	VarDefList';'VarDefState
 	;
 VarDefState:	VarList':'Type
 		{
+
+		int check = 0;
 		while ($1.attr.First) {
 			VarList[$1.attr.First].type = $3.attr.Iv;
 			$1.attr.First = VarList[$1.attr.First].addr;
+
+			if(check++ > MAXMEMBER) {
+				printf("** Repeatly define variable **\n");
+				exit(0);
+			}
 		}
+
 		/* =========================== */
 		struct node *last = get_last_node($1.Node);
 		add_brother_node(last, $3.Node);
@@ -163,6 +171,7 @@ Type:		Integer
 		{
 		//Type <Iv> <int>
 		$$.attr.Iv = 0;
+
 		/* =========================== */
 		new_node(&($$.Node));
 		$$.Node->type = e_type_int;
@@ -171,6 +180,7 @@ Type:		Integer
 	|	Real
 		{
 		$$.attr.Iv = 1;
+
 		/* =========================== */
 		new_node(&($$.Node));
 		$$.Node->type = e_type_real;
@@ -184,6 +194,12 @@ VarList:	VarList','Variable
 		$$.attr.First = $3.attr.NO;
 		VarList[$3.attr.NO].addr = $1.attr.CH;
 
+		// check whether variable is repeatedly defined
+		//printf("Here! %d ", VarCount);
+		//VarCount--;
+		
+
+
 		/* =========================== */
 		struct node *last = get_last_node($1.Node);
 		add_brother_node(last, $3.Node);
@@ -193,6 +209,9 @@ VarList:	VarList','Variable
 		{
 		$$.attr.First = $1.attr.NO;
 		VarList[$1.attr.NO].addr = 0;
+
+		
+		
 
 		/* =========================== */
 		$$.Node = $1.Node;
@@ -272,18 +291,23 @@ CompState:	Begin StateList End
 
 		new_node(&($$.Node));
 		$$.Node->type = e_compstat;
-		set_node_val_str($$.Node, "CompState");
+		set_node_val_str($$.Node, "begin_end");
 		add_son_node($$.Node, $2.Node);
 		}
 	;
 AsignState:	Variable ':''=' Expr
 		{
 		gen(":=", $4.attr._Expr.place, 0, $1.attr.NO);
+
+		if (flag_var_def == 0) {
+			printf("** undefined variable %s **", VarList[$1.attr.NO].name);
+			exit(0);
+		}
 		
 		/* =========================== */
 		new_node(&($$.Node));
 		$$.Node->type = e_assign_stat;
-		set_node_val_str($$.Node, "AsignState");
+		set_node_val_str($$.Node, ":=");
 		add_son_node($$.Node, $1.Node);
 		add_son_node($$.Node, $4.Node);
 		}
@@ -408,6 +432,12 @@ Expr:		Expr'+'Expr
 		{
 		$$.attr._Expr.place = $1.attr.NO;
 
+		// undefined error
+		if (flag_var_def == 0) {
+			printf("** undefined variable %s **", VarList[$1.attr.NO].name);
+			exit(0);
+		}
+
 		/* =========================== */
 		$$.Node = $1.Node;
 		}
@@ -436,7 +466,7 @@ BoolExpr:	Expr RelationOp Expr
 		/* =========================== */
 		new_node(&($$.Node));
 		$$.Node->type = e_bool_exp;
-		set_node_val_str($$.Node, $2.attr._Rop);
+		set_node_val_str($$.Node, &($2.attr._Rop[1]));
 		add_son_node($$.Node, $1.Node);
 		add_son_node($$.Node, $3.Node);
 		}
@@ -469,6 +499,11 @@ BoolExpr:	Expr RelationOp Expr
 Variable:	Iden
 		{
 		//Variable <NO> <int>
+		if (lookUp(str1)) {
+			flag_var_def = 1;
+		} else {
+			flag_var_def = 0;
+		}
 		$$.attr.CH = entry(str1); 
 
 		/* =========================== */
