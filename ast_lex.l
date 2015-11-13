@@ -22,11 +22,15 @@
 #define		Or			411
 #define		And			412
 #define		Not			413
+#define		Array		414
+#define		Of			415
 
 /*Define double_character terminates: */
 #define		LE		500
 #define		GE		501
 #define		NE		502
+#define		DD		503
+
 #define		ERRORCHAR	600
 
 #define MAXSTR 20
@@ -46,7 +50,9 @@ static char KeyWord[][MAXSTR]=
  "ELSE",
  "OR",
  "AND",
- "NOT"
+ "NOT",
+ "ARRAY",
+ "OF"
 };
 
 char str1[MAXSTR];
@@ -84,7 +90,10 @@ white			[\t\n\040]
 [Aa][Nn][Dd]			{ECHO;return And;}
 [Oo][Rr]					{ECHO;return Or;}
 [Nn][Oo][Tt]			{ECHO;return Not;}
-({d}+(\.{d}*)?[Ee]([+-])?{d}+)|({d}*\.{d}+[Ee]([+-])?{d}+)	{ECHO;strcpy(str1,yytext);return RealNo;}
+[Aa][Rr][Rr][Aa][Yy]	{ECHO;return Array;}
+[Oo][Ff]				{ECHO;return Of;}
+"\.\."		{ECHO;return DD;}
+({d}+(\.{d}*)?[Ee]([+-])?{d}+)|({d}*\.{d}+[Ee]([+-])?{d}+)	{ECHO;;strcpy(str1,yytext);return RealNo;}
 {d}+\.{d}*|{d}*\.{d}+		{ECHO;strcpy(str1,yytext);return RealNo;}
 {d}+										{ECHO;strcpy(str1,yytext);return IntNo;}
 
@@ -100,6 +109,7 @@ white			[\t\n\040]
 "<>"		{ECHO;return NE;}
 ":"			{ECHO;return ':';}
 ";"			{ECHO;return ';';}
+
 "\."		{ECHO;return '.';}
 "*"			{ECHO;return '*';}
 "+"			{ECHO;return '+';}
@@ -109,8 +119,8 @@ white			[\t\n\040]
 ","			{ECHO;return ',';}
 {letter}{alnum}*	{ ECHO;strcpy(str1,yytext);return Iden;}
 {white}+		{ECHO;}
-{d}+{letter}+        {printf("Invalid char %s\n",yytext);/*return ERRORCHAR;*/exit(0);}
-.						{printf("Invalid char %s\n",yytext);return ERRORCHAR; }
+{d}+{alnum}+        {printf("Invalid char %s\n",yytext);/*return ERRORCHAR;*/exit(0);}
+.						{printf("Invalid char %s\n",yytext);/*return ERRORCHAR;*/exit(0); }
 
 %%
 int id_or_keyword(char *str)

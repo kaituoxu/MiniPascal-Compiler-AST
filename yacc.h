@@ -19,10 +19,15 @@ struct QUATERLIST {
 	int arg1, arg2, result;
 };
 
+struct arr_info {
+	int DIM;
+	int *Vector;//Vector[0]´æ·ÅC
+};
 struct VARLIST {
 	char name[20];
 	int type;	//IF type is REAL THEN type = 1, ELSE IF type is INTEGER type = 0
 	int addr;
+	struct arr_info *ADDR;
 	/*union{int Iv;float Rv;} Value;*/
 };
 

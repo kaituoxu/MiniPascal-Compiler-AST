@@ -53,10 +53,9 @@ int entry(char *Name)
 
 int newTemp(void)
 {
-	char s[2], temp[5] = "T";
-	s[0] = tempVarCount + '0';
-	s[1] = '\0';
-	strcpy(VarList[MAXMEMBER - tempVarCount].name, strcat(temp, s));
+	char temp[5];
+	sprintf(temp, "T%d", tempVarCount);
+	strcpy(VarList[MAXMEMBER - tempVarCount].name, temp);
 	VarList[MAXMEMBER - tempVarCount].type = 0;
 	return MAXMEMBER-(tempVarCount++);
 }
@@ -109,4 +108,46 @@ void backPatch(int p, int t)
 		q = q1;
 	}
 	return;
+}
+
+/*****************************
+ * 计算并填写符号表第NO登记项ADDR域所指的内情向量中的C值
+ * C（CONSTPART）
+ *****************************/
+void FillArrMSG_C(int NO)
+{
+	int n = VarList[NO].ADDR->DIM;
+	int C = 0, j, k, mul;
+	for (j = 1; j < n; ++j) {
+		mul = 1;
+		for (k = j + 1; k < n + 1; ++k) {
+			mul *= VarList[NO].ADDR->Vector[3*k + 1];
+		}
+		C += VarList[NO].ADDR->Vector[3 * j - 1] * mul;
+	}
+	VarList[NO].ADDR->Vector[0] = C;
+}
+
+/*****************************
+* 取数组C值
+*****************************/
+int Access_C(int no)
+{
+	return VarList[no].ADDR->Vector[0];
+}
+
+/*****************************
+ * 这里有待完善
+ *****************************/
+int Access_a(int no)
+{
+	return VarList[no].ADDR;
+}
+
+/*****************************
+ * 取数组第k维的界差
+ *****************************/
+int Access_d(int no, int k)
+{
+	return VarList[no].ADDR->Vector[3 * k + 1];
 }

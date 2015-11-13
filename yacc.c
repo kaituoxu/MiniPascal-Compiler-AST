@@ -74,10 +74,14 @@ void OutputIList(void)
 
 	for (i = 1;i<VarCount;i++) {
 		printf("%4d\t%6s\t\t", i, VarList[i].name);
-		if (VarList[i].type) {
+		if (VarList[i].type == 1) {
 			printf(" REAL  \n");
-		} else {
+		} else if (VarList[i].type == 0) {
 			printf(" INTEGER\n");
+		} else if (VarList[i].type == 2) {
+			printf(" REAL ARRAY\n");
+		} else if (VarList[i].type == 3) {
+			printf(" INTEGER ARRAY\n");
 		}
 	}
 
@@ -141,7 +145,7 @@ void PreOrder(struct node *root, int tab)
 			printf("|\t");
 		}
 		if (i == tab - 1) {
-			printf("|------");
+			printf("|-----");
 		}
 		printf("<%s>\n", root->val.str);
 		++tab;

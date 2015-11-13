@@ -40,6 +40,8 @@ int flag_var_def = 0;
 		 struct { int type,place; union{int Iv;float Rv;} Value;} _Expr;
 		 char _Rop[5];
 		 int First;
+		 struct { int PLACE, OFFSET;} _Var;
+		 struct { int NO, DIM, PLACE;} _Elist;
 	 } attr;
  	struct node *Node;
  } all;
@@ -64,15 +66,19 @@ int flag_var_def = 0;
 %token	<str>		Or			411
 %token	<str>		And			412
 %token	<str>		Not			413
+%token  <str>		Array		414
+%token	<str>		Of			415
+
 /*Define double_character terminates:   */
 %token		LE	500
 %token		GE	501
 %token		NE	502
+%token		DD	503
 
 %left 	Or
 %left		And
 %nonassoc  	Not
-%nonassoc '<' '>' '=' LE GE NE
+%nonassoc '<' '>' '=' LE GE NE DD
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
@@ -98,10 +104,12 @@ int flag_var_def = 0;
 /*%type <CH> BAND	
 %type <CH> BOR*/
 %type <all> Wh	//CH
-%type <all> Variable //NO
+%type <all> Variable //NO-->_Var
 %type <all> Const //_Expr
 %type <all>	BoolExpr //_BExpr
-
+%type <all> ArrayMSG
+%type <all> ArrayVar
+%type <all> ExprList //_Elist
 
 %%
 ProgDef:	Program Iden {set_node_val_str(&root,str1);} ';' SubProg '.'
@@ -166,6 +174,27 @@ VarDefState:	VarList':'Type
 		$1.Node->type = e_varlist;
 		$$.Node = $1.Node;
 		}
+	|	ArrayVar Type
+		{
+		int check = 0;
+		int NO = $1.attr.NO;
+
+		if ($2.attr.Iv == 1) {
+			$2.attr.Iv = 2;//real array
+		} else {
+			$2.attr.Iv = 3;//int array
+		}
+
+		while (NO) {
+			VarList[NO].type = $2.attr.Iv;
+			NO = VarList[NO].addr;
+
+			if(check++ > MAXMEMBER) {
+				printf("** Repeatly define variable **\n");
+				exit(0);
+			}
+		}
+		}
 	;
 Type:		Integer
 		{
@@ -191,13 +220,8 @@ VarList:	VarList','Variable
 		{
 		// VarList <First> <int>
 
-		$$.attr.First = $3.attr.NO;
-		VarList[$3.attr.NO].addr = $1.attr.CH;
-
-		// check whether variable is repeatedly defined
-		//printf("Here! %d ", VarCount);
-		//VarCount--;
-		
+		$$.attr.First = $3.attr._Var.PLACE;
+		VarList[$3.attr._Var.PLACE].addr = $1.attr.First;
 
 
 		/* =========================== */
@@ -207,11 +231,9 @@ VarList:	VarList','Variable
 		}
 	|	Variable
 		{
-		$$.attr.First = $1.attr.NO;
-		VarList[$1.attr.NO].addr = 0;
+		$$.attr.First = $1.attr._Var.PLACE;
+		VarList[$1.attr._Var.PLACE].addr = 0;
 
-		
-		
 
 		/* =========================== */
 		$$.Node = $1.Node;
@@ -297,10 +319,14 @@ CompState:	Begin StateList End
 	;
 AsignState:	Variable ':''=' Expr
 		{
-		gen(":=", $4.attr._Expr.place, 0, $1.attr.NO);
+		if (!$1.attr._Var.OFFSET) {
+			gen(":=", $4.attr._Expr.place, 0, $1.attr._Var.PLACE);
+		} else {
+			gen("[]=", $4.attr._Expr.place, 0, $1.attr._Var.PLACE);
+		}
 
 		if (flag_var_def == 0) {
-			printf("** undefined variable %s **", VarList[$1.attr.NO].name);
+			printf("** undefined variable %s **", VarList[$1.attr._Var.PLACE].name);
 			exit(0);
 		}
 		
@@ -430,11 +456,17 @@ Expr:		Expr'+'Expr
 		}
 	|	Variable
 		{
-		$$.attr._Expr.place = $1.attr.NO;
+		if (!$1.attr._Var.OFFSET) {
+			$$.attr._Expr.place = $1.attr._Var.PLACE;
+		} else {
+			int T = newTemp();
+			gen("=[]", $1.attr._Var.PLACE, 0, T);
+			$$.attr._Expr.place = T;
+		}
 
 		// undefined error
 		if (flag_var_def == 0) {
-			printf("** undefined variable %s **", VarList[$1.attr.NO].name);
+			printf("** undefined variable %s **", VarList[$1.attr._Var.PLACE].name);
 			exit(0);
 		}
 
@@ -504,11 +536,27 @@ Variable:	Iden
 		} else {
 			flag_var_def = 0;
 		}
-		$$.attr.CH = entry(str1); 
+		$$.attr._Var.PLACE = entry(str1); 
+		$$.attr._Var.OFFSET = 0;
+		
 
 		/* =========================== */
 		new_node(&($$.Node));
 		set_node_val_str($$.Node, str1);
+		}
+	|	ExprList ']'
+		{
+			char Cstr[10], astr[10] = "ArrPtr";
+			int C/*,a*/;
+			int T = newTemp();
+			C = Access_C($1.attr._Elist.NO);
+			//a = Access_a($1.attr._Elist.NO);
+
+			sprintf(Cstr, "%d", C);
+			//sprintf(astr, "%d", a);
+			gen("-", entry(astr), entry(Cstr),T);
+			$$.attr._Elist.PLACE = T;
+			$$.attr._Var.OFFSET = $1.attr._Elist.PLACE;
 		}
 	;
 Const:		IntNo
@@ -564,4 +612,63 @@ RelationOp:	'<'
 		}
 	;
 
+ArrayVar: ArrayMSG ']' Of
+		{
+			$$.attr.NO = $1.attr.NO;
+			FillArrMSG_C($$.attr.NO);   
+		}
+	;
+ArrayMSG: VarList ':' Array '[' Const DD Const
+		{
+		// ArrayMSG <NO> <int>
+			int NO = $$.attr.NO;
+			int low = $5.attr._Expr.Value.Iv, high = $7.attr._Expr.Value.Iv;
+			$$.attr.NO = $1.attr.First;
+
+			VarList[NO].ADDR = malloc(sizeof(struct arr_info));
+			VarList[NO].ADDR->DIM = 1;
+			VarList[NO].ADDR->Vector = malloc(5*sizeof(int));
+			VarList[NO].ADDR->Vector[2] = low;
+			VarList[NO].ADDR->Vector[3] = high;
+			VarList[NO].ADDR->Vector[4] = (high - low) + 1;
+		}
+	|	  ArrayMSG ',' Const DD Const
+		{
+			int NO = $1.attr.NO;
+			int dim = VarList[NO].ADDR->DIM+1;
+			int low = $3.attr._Expr.Value.Iv, high = $5.attr._Expr.Value.Iv;
+			$$.attr.NO = NO;
+
+			VarList[NO].ADDR->DIM++;
+			VarList[NO].ADDR->Vector = realloc(VarList[NO].ADDR->Vector, (3 * dim + 2) * sizeof(int));
+			VarList[NO].ADDR->Vector[3*dim - 1] = low;
+			VarList[NO].ADDR->Vector[3*dim] = high;
+			VarList[NO].ADDR->Vector[3*dim + 1] = (high - low) + 1;
+		}
+	;
+
+ExprList: Variable '[' Expr
+		{
+			//ExprList
+			$$.attr._Elist.PLACE = $3.attr._Expr.place;
+			$$.attr._Elist.DIM = 1;
+			$$.attr._Elist.NO = $1.attr._Var.PLACE;
+		}
+	|	ExprList ',' Expr
+		{
+			char num[5];
+			int k,d;
+			int T = newTemp();
+			k = $1.attr._Elist.DIM + 1;
+			d = Access_d($1.attr._Elist.NO, k);
+			
+			sprintf(num, "%d", d);
+			gen("*", $1.attr._Elist.PLACE, entry(num), T);
+			gen("+", $3.attr._Expr.place, T, T);
+			$$.attr._Elist.NO = $1.attr._Elist.NO;
+			$$.attr._Elist.PLACE = T;
+			$$.attr._Elist.DIM = k;
+		}
+	;
+	
 %%
